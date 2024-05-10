@@ -6,6 +6,9 @@ Tested once on Android. You can make it fully compatible with your own target pl
 
 [Library Directory Address.](https://github.com/msasanmh/MsmhAgnosticServer/tree/main/MsmhToolsClass/MsmhToolsClass/MsmhAgnosticServer)<br>
 
+Nuget Package:<br>
+[https://www.nuget.org/packages/MsmhAgnosticServer/](https://www.nuget.org/packages/MsmhAgnosticServer/)<br>
+
 DNS Servers: DNS-Over-UDP, DNS-Over-TCP, DNS-Over-HTTPS (DoH)<br>
 DNS Clients: DNS-Over-UDP, DNS-Over-TCP, DNS-Over-HTTPS (DoH), DNS-Over-TLS (DoT), DNSCrypt.<br>
 Proxy Servers:<br>
