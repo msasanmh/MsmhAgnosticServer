@@ -20,6 +20,13 @@
     SOCKS5 (Domain, IPv4, IPv6) (Connect, Bind, UDP)
     SSL Decryption</Description>
     <PackageProjectUrl>https://github.com/msasanmh/MsmhAgnosticServer/</PackageProjectUrl>
+	<RepositoryUrl>https://github.com/msasanmh/MsmhAgnosticServer/</RepositoryUrl>
+    <PackageTags>DNS-Server;Proxy-Server;</PackageTags>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageIcon>SDC.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageId>MsmhAgnosticServer</PackageId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -199,6 +206,21 @@
     <None Remove="C:\Users\msasa\.nuget\packages\microsoft.powershell.sdk\7.2.18\contentFiles\any\any\runtimes\win\lib\net6.0\Modules\Microsoft.WSMan.Management\WSMan.format.ps1xml" />
     <None Remove="C:\Users\msasa\.nuget\packages\microsoft.powershell.sdk\7.2.18\contentFiles\any\any\runtimes\win\lib\net6.0\Modules\PSDiagnostics\PSDiagnostics.psd1" />
     <None Remove="C:\Users\msasa\.nuget\packages\microsoft.powershell.sdk\7.2.18\contentFiles\any\any\runtimes\win\lib\net6.0\Modules\PSDiagnostics\PSDiagnostics.psm1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\LICENSE">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\SDC.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
