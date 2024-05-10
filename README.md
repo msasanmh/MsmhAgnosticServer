@@ -4,6 +4,8 @@ _I'm just sharing this library for developers due to recieved requests.
 It's a multi platform DNS and Proxy Server. Target Platform: Windows.
 Tested once on Android. You can make it fully compatible with your own target platform._
 
+[Library Directory Address.](https://github.com/msasanmh/MsmhAgnosticServer/tree/main/MsmhToolsClass/MsmhToolsClass/MsmhAgnosticServer)<br>
+
 DNS Servers: DNS-Over-UDP, DNS-Over-TCP, DNS-Over-HTTPS (DoH)<br>
 DNS Clients: DNS-Over-UDP, DNS-Over-TCP, DNS-Over-HTTPS (DoH), DNS-Over-TLS (DoT), DNSCrypt.<br>
 Proxy Servers:<br>
