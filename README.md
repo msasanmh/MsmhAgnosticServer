@@ -4,24 +4,22 @@ _I'm just sharing this library for developers due to recieved requests.
 It's a multi platform DNS and Proxy Server. Target Platform: Windows.
 Tested once on Android. You can make it fully compatible with your own target platform._
 
-[Library Directory Address.](https://github.com/msasanmh/MsmhAgnosticServer/tree/main/MsmhToolsClass/MsmhToolsClass/MsmhAgnosticServer)<br>
+[Library Directory Address.](https://github.com/msasanmh/MsmhAgnosticServer/tree/main/MsmhToolsClass/MsmhToolsClass/MsmhAgnosticServer)\
 
-Nuget Package:<br>
-[https://www.nuget.org/packages/MsmhAgnosticServer/](https://www.nuget.org/packages/MsmhAgnosticServer/)<br>
+DNS Servers: DNS-Over-UDP, DNS-Over-TCP, DNS-Over-HTTPS (DoH)\
+DNS Clients: DNS-Over-UDP, DNS-Over-TCP, DNS-Over-HTTPS (DoH)(http://, h3://), DNS-Over-TLS (DoT), DNSCrypt, Anonymized DNSCrypt.\
+Proxy Servers:\
+    HTTP (Domain, IPv4, IPv6) (Get, Post, etc)\
+    HTTPS (Domain, IPv4, IPv6) (Post, etc)\
+    SOCKS4 (IPv4) (Connect, Bind)\
+    SOCKS4A (Domain, IPv4) (Connect, Bind)\
+    SOCKS5 (Domain, IPv4, IPv6) (Connect, Bind, UDP)\
 
-DNS Servers: DNS-Over-UDP, DNS-Over-TCP, DNS-Over-HTTPS (DoH)<br>
-DNS Clients: DNS-Over-UDP, DNS-Over-TCP, DNS-Over-HTTPS (DoH), DNS-Over-TLS (DoT), DNSCrypt.<br>
-Proxy Servers:<br>
-    HTTP (Domain, IPv4, IPv6) (Get, Post, etc)<br>
-    HTTPS (Domain, IPv4, IPv6) (Post, etc)<br>
-    SOCKS4 (IPv4) (Connect, Bind)<br>
-    SOCKS4A (Domain, IPv4) (Connect, Bind)<br>
-    SOCKS5 (Domain, IPv4, IPv6) (Connect, Bind, UDP)<br>
+DNS Server Features: DNS Records modification, Upstream Proxy, Text based DNS Rules (Block, Fake DNS, Upstream Proxy per domain)\
+Proxy Server Features: Upstream Proxy, Fragment, Fake SNI, Text based Proxy Rules (Block, Fake DNS, Fake SNI, Custom DNS, Upstream Proxy per domain)\
 
-DNS Server Features: DNS Records modification, Upstream Proxy, Text based DNS Rules (Block, Fake DNS, Upstream Proxy per domain)<br>
-Proxy Server Features: Upstream Proxy, Fragment, Fake SNI, Text based Proxy Rules (Block, Fake DNS, Fake SNI, Custom DNS, Upstream Proxy per domain)<br>
-
-Smart DNS Server: Supported - You can create an Smart DNS Server using DNS Rules (Just modify all A Records and AAAA Records To Your Proxy Server IP).<br>
+Smart DNS Server: Supported - You can create an Smart DNS Server using DNS Rules (Just modify all A Records and AAAA Records To Your Proxy Server IP).\
+Limit DoH By Path: Supported - e.g. https://example.com/UserName/dns-query </br>
 
 Running a DNS and Proxy Server on port 8080 example:
 ```C#
@@ -38,6 +36,7 @@ List<string> dnsServers = new()
     "tcp://8.8.8.8:53",
     "tcp://1.1.1.1:53",
     "https://max.rethinkdns.com/dns-query",
+    "h3://max.rethinkdns.com/dns-query",
     "https://45.90.29.204:443/dns-query",
     "udp://208.67.222.222:5353"
 };
@@ -75,6 +74,12 @@ server.EnableFragment(fragment);
 //AgnosticProgram.ProxyRules proxyRules = new();
 //proxyRules.Set(AgnosticProgram.ProxyRules.Mode.File, "File_Path");
 //server.EnableProxyRules(proxyRules);
+
+// Enable DNS Limit Program e.g. https://127.0.0.1:8080/dns-query and https://127.0.0.1:8080/UserName/dns-query
+AgnosticProgram.DnsLimit dnsLimit = new();
+string allowedDohPaths = "dns-query\nUserName";
+dnsLimit.Set(true, false, AgnosticProgram.DnsLimit.LimitDoHPathsMode.Text, allowedDohPaths);
+server.EnableDnsLimit(dnsLimit);
 
 // Create SSL Settings For Activating DoH And HTTPS Server, Also You Can Change SNI Here (Fake SNI)
 AgnosticSettingsSSL settingsSSL = new(true)

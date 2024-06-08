@@ -23,6 +23,7 @@ internal class Program
             "tcp://8.8.8.8:53",
             "tcp://1.1.1.1:53",
             "https://max.rethinkdns.com/dns-query",
+            "h3://max.rethinkdns.com/dns-query",
             "https://45.90.29.204:443/dns-query",
             "udp://208.67.222.222:5353"
         };
@@ -51,15 +52,21 @@ internal class Program
         fragment.Set(AgnosticProgram.Fragment.Mode.Program, 50, AgnosticProgram.Fragment.ChunkMode.SNI, 5, 2, 1);
         server.EnableFragment(fragment);
 
-        //// Enable DNS Rules
-        //AgnosticProgram.DnsRules dnsRules = new();
-        //dnsRules.Set(AgnosticProgram.DnsRules.Mode.File, "File_Path");
-        //server.EnableDnsRules(dnsRules);
+        // Enable DNS Rules
+        AgnosticProgram.DnsRules dnsRules = new();
+        dnsRules.Set(AgnosticProgram.DnsRules.Mode.File, "File_Path");
+        server.EnableDnsRules(dnsRules);
 
         //// Enable Proxy Rules
         //AgnosticProgram.ProxyRules proxyRules = new();
         //proxyRules.Set(AgnosticProgram.ProxyRules.Mode.File, "File_Path");
         //server.EnableProxyRules(proxyRules);
+
+        // Enable DNS Limit Program e.g. https://127.0.0.1:8080/dns-query and https://127.0.0.1:8080/UserName/dns-query
+        AgnosticProgram.DnsLimit dnsLimit = new();
+        string allowedDohPaths = "dns-query\nUserName";
+        dnsLimit.Set(true, false, AgnosticProgram.DnsLimit.LimitDoHPathsMode.Text, allowedDohPaths);
+        server.EnableDnsLimit(dnsLimit);
 
         // Create SSL Settings For Activating DoH And HTTPS Server, Also You Can Change SNI Here (Fake SNI)
         AgnosticSettingsSSL settingsSSL = new(true)
