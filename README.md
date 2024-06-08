@@ -7,7 +7,7 @@ Tested once on Android. You can make it fully compatible with your own target pl
 [Library Directory Address.](https://github.com/msasanmh/MsmhAgnosticServer/tree/main/MsmhToolsClass/MsmhToolsClass/MsmhAgnosticServer)\
 
 DNS Servers: DNS-Over-UDP, DNS-Over-TCP, DNS-Over-HTTPS (DoH)\
-DNS Clients: DNS-Over-UDP, DNS-Over-TCP, DNS-Over-HTTPS (DoH)(http://, h3://), DNS-Over-TLS (DoT), DNSCrypt, Anonymized DNSCrypt.\
+DNS Clients: DNS-Over-UDP, DNS-Over-TCP, DNS-Over-HTTPS (DoH)(https://, h3://), DNS-Over-TLS (DoT), DNSCrypt, Anonymized DNSCrypt.\
 Proxy Servers:\
     HTTP (Domain, IPv4, IPv6) (Get, Post, etc)\
     HTTPS (Domain, IPv4, IPv6) (Post, etc)\
