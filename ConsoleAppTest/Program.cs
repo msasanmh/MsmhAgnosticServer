@@ -42,7 +42,7 @@ internal class Program
             BootstrapPort = 53, // Set Bootstrap Port
             AllowInsecure = false, // Allow Insecure
             BlockPort80 = false, // Block Port 80 On Proxy Requests
-            // CloudflareCleanIP = cfClenIP, // You Can Redirect All Cloudflare IPs To A Clean IP (IPv4 Only)
+            // CloudflareCleanIP = cfClenIP, // You Can Redirect All Cloudflare IPs To A Clean IP (IPv4 Or IPv6)
             // UpstreamProxyScheme = $"socks5://{IPAddress.Loopback}:53", // You Can Set Your Upstream Proxy Here
             // ApplyUpstreamOnlyToBlockedIps = true // Apply Upstream Proxy Only To Blocked IPs
         };
@@ -52,15 +52,10 @@ internal class Program
         fragment.Set(AgnosticProgram.Fragment.Mode.Program, 50, AgnosticProgram.Fragment.ChunkMode.SNI, 5, 2, 1);
         server.EnableFragment(fragment);
 
-        // Enable DNS Rules
-        AgnosticProgram.DnsRules dnsRules = new();
-        dnsRules.Set(AgnosticProgram.DnsRules.Mode.File, "File_Path");
-        server.EnableDnsRules(dnsRules);
-
-        //// Enable Proxy Rules
-        //AgnosticProgram.ProxyRules proxyRules = new();
-        //proxyRules.Set(AgnosticProgram.ProxyRules.Mode.File, "File_Path");
-        //server.EnableProxyRules(proxyRules);
+        // Enable Rules
+        AgnosticProgram.Rules rules = new();
+        await rules.SetAsync(AgnosticProgram.Rules.Mode.File, "File_Path");
+        server.EnableRules(rules);
 
         // Enable DNS Limit Program e.g. https://127.0.0.1:8080/dns-query and https://127.0.0.1:8080/UserName/dns-query
         AgnosticProgram.DnsLimit dnsLimit = new();

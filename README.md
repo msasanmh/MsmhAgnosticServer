@@ -4,7 +4,9 @@ _I'm just sharing this library for developers due to recieved requests.
 It's a multi platform DNS and Proxy Server. Target Platform: Windows.
 Tested once on Android. You can make it fully compatible with your own target platform._
 
-[Library Directory Address.](https://github.com/msasanmh/MsmhAgnosticServer/tree/main/MsmhToolsClass/MsmhToolsClass/MsmhAgnosticServer)\
+* New: DNS Rules and Proxy Rules Merged into one.
+
+[Library Directory Address.](https://github.com/msasanmh/MsmhAgnosticServer/tree/main/MsmhToolsClass/MsmhToolsClass/MsmhAgnosticServer)
 
 DNS Servers: DNS-Over-UDP, DNS-Over-TCP, DNS-Over-HTTPS (DoH)\
 DNS Clients: DNS-Over-UDP, DNS-Over-TCP, DNS-Over-HTTPS (DoH)(https://, h3://), DNS-Over-TLS (DoT), DNSCrypt, Anonymized DNSCrypt.\
@@ -13,7 +15,7 @@ Proxy Servers:\
     HTTPS (Domain, IPv4, IPv6) (Post, etc)\
     SOCKS4 (IPv4) (Connect, Bind)\
     SOCKS4A (Domain, IPv4) (Connect, Bind)\
-    SOCKS5 (Domain, IPv4, IPv6) (Connect, Bind, UDP)\
+    SOCKS5 (Domain, IPv4, IPv6) (Connect, Bind, UDP)
 
 DNS Server Features: DNS Records modification, Upstream Proxy, Text based DNS Rules (Block, Fake DNS, Upstream Proxy per domain)\
 Proxy Server Features: Upstream Proxy, Fragment, Fake SNI, Text based Proxy Rules (Block, Fake DNS, Fake SNI, Custom DNS, Upstream Proxy per domain)\
@@ -65,15 +67,10 @@ AgnosticProgram.Fragment fragment = new();
 fragment.Set(AgnosticProgram.Fragment.Mode.Program, 50, AgnosticProgram.Fragment.ChunkMode.SNI, 5, 2, 1);
 server.EnableFragment(fragment);
 
-//// Enable DNS Rules
-//AgnosticProgram.DnsRules dnsRules = new();
-//dnsRules.Set(AgnosticProgram.DnsRules.Mode.File, "File_Path");
-//server.EnableDnsRules(dnsRules);
-
-//// Enable Proxy Rules
-//AgnosticProgram.ProxyRules proxyRules = new();
-//proxyRules.Set(AgnosticProgram.ProxyRules.Mode.File, "File_Path");
-//server.EnableProxyRules(proxyRules);
+// Enable Rules
+AgnosticProgram.Rules rules = new();
+await rules.SetAsync(AgnosticProgram.Rules.Mode.File, "File_Path");
+server.EnableRules(rules);
 
 // Enable DNS Limit Program e.g. https://127.0.0.1:8080/dns-query and https://127.0.0.1:8080/UserName/dns-query
 AgnosticProgram.DnsLimit dnsLimit = new();

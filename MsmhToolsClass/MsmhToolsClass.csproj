@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Platforms>AnyCPU;x64;x86</Platforms>
-    <Version>$(VersionPrefix)1.6.2</Version>
+    <Version>$(VersionPrefix)1.6.6</Version>
     <Copyright>MSasanMH</Copyright>
     <Title>Msmh Agnostic Server</Title>
     <Authors>MSasanMH</Authors>
@@ -21,7 +21,7 @@
     SSL Decryption</Description>
     <PackageProjectUrl>https://github.com/msasanmh/MsmhAgnosticServer/</PackageProjectUrl>
 	<RepositoryUrl>https://github.com/msasanmh/MsmhAgnosticServer/</RepositoryUrl>
-    <PackageTags>DNS-Server;Proxy-Server;</PackageTags>
+    <PackageTags>DNS Server;Proxy Server;</PackageTags>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageIcon>SDC.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
