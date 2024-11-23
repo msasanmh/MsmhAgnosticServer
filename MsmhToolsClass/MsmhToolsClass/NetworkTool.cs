@@ -14,6 +14,29 @@ namespace MsmhToolsClass;
 
 public static class NetworkTool
 {
+    /// <summary>
+    /// Int To IPv4
+    /// </summary>
+    /// <param name="ipInt"></param>
+    /// <returns>Returns IPv4, If Fail: IPAddress.None</returns>
+    public static IPAddress IntToIPv4(int ipInt)
+    {
+        IPAddress ip = IPAddress.None;
+
+        try
+        {
+            string ipStr = $"{(ipInt & 0xFF)}.{(ipInt >> 8 & 0xFF)}.{(ipInt >> 16 & 0xFF)}.{(ipInt >> 24 & 0xFF)}";
+            bool isValid = NetworkTool.IsIPv4Valid(ipStr, out IPAddress? ipOut);
+            if (isValid && ipOut != null) ip = ipOut;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine("IntToIPv4: " + ex.Message);
+        }
+
+        return ip;
+    }
+
     public static bool IsIPv4Supported()
     {
         bool result = false;
@@ -1418,7 +1441,7 @@ public static class NetworkTool
         }
     }
 
-    public static async Task<HttpStatusCode> GetHttpStatusCodeAsync(string urlOrDomain, string? ip, int timeoutMs, bool useSystemProxy, bool isAgnosticProxyTest = false, string? proxyScheme = null, string? proxyUser = null, string? proxyPass = null, CancellationToken ct = default)
+    public static async Task<HttpStatusCode> GetHttpStatusCodeAsync(string urlOrDomain, string? ipStr, int timeoutMs, bool useSystemProxy, bool isAgnosticProxyTest = false, string? proxyScheme = null, string? proxyUser = null, string? proxyPass = null, CancellationToken ct = default)
     {
         HttpStatusCode result = HttpStatusCode.RequestTimeout;
         if (string.IsNullOrWhiteSpace(urlOrDomain)) return result;
@@ -1426,9 +1449,7 @@ public static class NetworkTool
         try
         {
             GetUrlDetails(urlOrDomain.Trim(), 443, out string scheme, out string host, out _, out _, out int port, out string path, out _);
-            string origHost = host;
             if (string.IsNullOrEmpty(scheme)) scheme = "https://";
-            if (!string.IsNullOrWhiteSpace(ip)) host = ip.Trim();
 
             UriBuilder uriBuilder = new()
             {
@@ -1463,8 +1484,9 @@ public static class NetworkTool
                 ProxyUser = proxyUser,
                 ProxyPass = proxyPass,
             };
-            hr.Headers.Add("host", origHost); // In Case Of Using IP
-            if (isAgnosticProxyTest) hr.UserAgent = "SDC - Secure DNS Client"; // Proxy Test Protocol Depends On This
+            hr.Headers.Add("host", host); // In Case Of Using IP
+            if (!string.IsNullOrEmpty(ipStr) && IsIP(ipStr, out IPAddress? ip) && ip != null) hr.AddressIP = ip;
+            if (isAgnosticProxyTest) hr.UserAgent = "DNSveil - A Secure DNS Client"; // Proxy Test Protocol Depends On This
 
             HttpRequestResponse hrr = await HttpRequest.SendAsync(hr).ConfigureAwait(false);
 
@@ -1475,7 +1497,7 @@ public static class NetworkTool
         return result;
     }
 
-    public static async Task<string> GetHeadersAsync(string urlOrDomain, string? ip, int timeoutMs, bool useSystemProxy, string? proxyScheme = null, string? proxyUser = null, string? proxyPass = null)
+    public static async Task<string> GetHeadersAsync(string urlOrDomain, string? ipStr, int timeoutMs, bool useSystemProxy, string? proxyScheme = null, string? proxyUser = null, string? proxyPass = null)
     {
         string result = string.Empty;
         if (string.IsNullOrWhiteSpace(urlOrDomain)) return result;
@@ -1483,9 +1505,7 @@ public static class NetworkTool
         try
         {
             GetUrlDetails(urlOrDomain.Trim(), 443, out string scheme, out string host, out _, out _, out int port, out string path, out _);
-            string origHost = host;
             if (string.IsNullOrEmpty(scheme)) scheme = "https://";
-            if (!string.IsNullOrWhiteSpace(ip)) host = ip.Trim();
             bool firstTrySuccess = false;
 
             try
@@ -1523,8 +1543,8 @@ public static class NetworkTool
                     ProxyUser = proxyUser,
                     ProxyPass = proxyPass,
                 };
-                hr.Headers.Add("host", origHost); // In Case Of Using IP
-
+                hr.Headers.Add("host", host); // In Case Of Using IP
+                if (!string.IsNullOrEmpty(ipStr) && IsIP(ipStr, out IPAddress? ip) && ip != null) hr.AddressIP = ip;
                 HttpRequestResponse hrr = await HttpRequest.SendAsync(hr).ConfigureAwait(false);
 
                 List<string> resultList = new()
@@ -1554,8 +1574,8 @@ public static class NetworkTool
             {
                 if (!firstTrySuccess && !urlOrDomain.Contains("://www."))
                 {
-                    urlOrDomain = $"{scheme}www.{origHost}:{port}{path}";
-                    result = await GetHeadersAsync(urlOrDomain, ip, timeoutMs, useSystemProxy, proxyScheme, proxyUser, proxyPass);
+                    urlOrDomain = $"{scheme}www.{host}:{port}{path}";
+                    result = await GetHeadersAsync(urlOrDomain, ipStr, timeoutMs, useSystemProxy, proxyScheme, proxyUser, proxyPass);
                 }
             }
             catch (Exception) { }

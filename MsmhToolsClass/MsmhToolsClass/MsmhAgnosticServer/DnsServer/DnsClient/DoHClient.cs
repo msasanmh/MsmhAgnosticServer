@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.Diagnostics;
+using System.Net;
 
 namespace MsmhToolsClass.MsmhAgnosticServer;
 
@@ -48,7 +49,7 @@ public class DoHClient
                 UriBuilder uriBuilder = new()
                 {
                     Scheme = scheme,
-                    Host = dnsServerIP,
+                    Host = Reader.Host,
                     Port = Reader.Port,
                     Path = Reader.Path
                 };
@@ -69,6 +70,7 @@ public class DoHClient
                     ProxyPass = ProxyPass,
                 };
                 hr.Headers.Add("host", Reader.Host); // In Case Of Using Bootstrap
+                if (NetworkTool.IsIP(dnsServerIP, out IPAddress? ip) && ip != null) hr.AddressIP = ip;
 
                 if (Reader.Scheme.Equals("h3://")) hr.IsHttp3 = true;
                 

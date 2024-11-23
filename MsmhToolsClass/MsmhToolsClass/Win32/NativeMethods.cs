@@ -107,6 +107,9 @@ public static class NativeMethods
     [DllImport("dwmapi.dll")]
     public static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
 
+    [DllImport("dwmapi.dll")]
+    public static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, int[] attrValue, int attrSize);
+
     [DllImport("uxtheme.dll", CharSet = CharSet.Unicode)]
     public extern static int SetWindowTheme(IntPtr hWnd, string pszSubAppName, string? pszSubIdList);
     // Usage: SetWindowTheme(control.Handle, "DarkMode_Explorer", null);

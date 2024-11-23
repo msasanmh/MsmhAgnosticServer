@@ -4,7 +4,7 @@ _I'm just sharing this library for developers due to recieved requests.
 It's a multi platform DNS and Proxy Server. Target Platform: Windows.
 Tested once on Android. You can make it fully compatible with your own target platform._
 
-* New: DNS Rules and Proxy Rules Merged into one.
+* v1.6.7: DoH Client fixed for Android.
 
 [Library Directory Address.](https://github.com/msasanmh/MsmhAgnosticServer/tree/main/MsmhToolsClass/MsmhToolsClass/MsmhAgnosticServer)
 

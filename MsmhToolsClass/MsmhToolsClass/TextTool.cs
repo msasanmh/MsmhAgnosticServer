@@ -63,34 +63,11 @@ public class TextTool
             }
             catch (Exception ex)
             {
-                Debug.WriteLine("GetLinks: " + ex.Message);
+                Debug.WriteLine("TextTool GetLinks: " + ex.Message);
             }
         });
 
         return links;
-    }
-
-    public static string RemoveText(string text, char startChar, char endChar)
-    {
-        if (text.Contains(startChar) && text.Contains(endChar))
-        {
-            try
-            {
-                while (true)
-                {
-                    int start = text.IndexOf(startChar);
-                    int end = text.IndexOf(endChar);
-                    if (start != -1 && end != -1)
-                    {
-                        if (end > start) text = text.Remove(start, end - start + 1);
-                        else text = text.Remove(end, 1);
-                    }
-                    else break;
-                }
-            }
-            catch (Exception) { }
-        }
-        return text;
     }
 
     public static async Task<string> RemoveTextAsync(string text, char startChar, char endChar, bool replaceWithSpace = false)
@@ -101,6 +78,8 @@ public class TextTool
             {
                 try
                 {
+                    text = Regex.Replace(text, $"{startChar}.*?{endChar}", " ");
+
                     while (true)
                     {
                         int start = text.IndexOf(startChar);
@@ -132,11 +111,9 @@ public class TextTool
 
             html = await RemoveTextAsync(html, '<', '>', replaceTagsWithSpace);
             html = await RemoveTextAsync(html, '{', '}', replaceTagsWithSpace);
-
-            List<string> result = new();
+            
             string[] lines = html.ReplaceLineEndings().Split(Environment.NewLine, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-            result.AddRange(lines);
-            html = WebUtility.HtmlDecode(result.ToString(Environment.NewLine).Trim());
+            html = WebUtility.HtmlDecode(lines.ToList().ToString(Environment.NewLine));
         }
         catch (Exception) { }
         return html;
