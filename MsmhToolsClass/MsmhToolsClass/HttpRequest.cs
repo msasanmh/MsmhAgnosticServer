@@ -147,7 +147,7 @@ public class HttpRequest
     public bool IsForHttpProxy { get; set; } = false;
     public Uri? URI { get; set; }
     /// <summary>
-    /// Connect To This IP (Host's IP Retrieved From A DNS Server)
+    /// Connect To This IP (Host's IP Retrieved From A DNS Server) - Will Be Ignored If ProxyScheme Is Set.
     /// </summary>
     public IPAddress AddressIP { get; set; } = IPAddress.None;
     public byte[] DataToSend { get; set; } = Array.Empty<byte>();
@@ -251,7 +251,11 @@ public class HttpRequest
                         // Get URI (For HTTP & HTTPS Proxies)
                         // For HTTP: Scheme: Yes, Port: No
                         // For HTTPS: Scheme: No, Port: Yes
-                        NetworkTool.GetUrlDetails(rawUrl, -1, out scheme, out host, out _, out _, out port, out path, out _);
+                        NetworkTool.URL urid = NetworkTool.GetUrlOrDomainDetails(rawUrl, -1);
+                        scheme = urid.Scheme;
+                        host = urid.Host;
+                        port = urid.Port;
+                        path = urid.Path;
                         if (scheme.ToLower().Equals("http://") && port == -1) port = 80;
                         if (string.IsNullOrEmpty(scheme) && port != -1) scheme = "https://";
                         if (string.IsNullOrEmpty(scheme) && port == -1) path = rawUrl; // e.g. DoH Request
@@ -292,7 +296,9 @@ public class HttpRequest
                             host = val;
                             if (host.Contains(':'))
                             {
-                                NetworkTool.GetUrlDetails(host, -1, out _, out string host2, out _, out _, out int port2, out _, out _);
+                                NetworkTool.URL urid = NetworkTool.GetUrlOrDomainDetails(host, -1);
+                                string host2 = urid.Host;
+                                int port2 = urid.Port;
 
                                 // If Host Is IPv6
                                 if (host2.StartsWith('[')) host2 = host2.TrimStart('[');
@@ -364,7 +370,7 @@ public class HttpRequest
     public static async Task<HttpRequestResponse> SendAsync(HttpRequest hr)
     {
         HttpRequestResponse hrr = new();
-
+        
         Task task = Task.Run(async () =>
         {
             try
@@ -374,7 +380,7 @@ public class HttpRequest
 
                 HttpClient? httpClient;
 
-                if (hr.AddressIP == IPAddress.None)
+                if (hr.AddressIP == IPAddress.None || !string.IsNullOrEmpty(hr.ProxyScheme))
                 {
                     HttpClientHandler handler = new()
                     {
@@ -388,7 +394,7 @@ public class HttpRequest
                         handler.ClientCertificateOptions = ClientCertificateOption.Manual;
                         handler.ServerCertificateCustomValidationCallback = callback;
                     }
-
+                    
                     if (!string.IsNullOrEmpty(hr.ProxyScheme))
                     {
                         NetworkCredential credential = new(hr.ProxyUser, hr.ProxyPass);
@@ -412,6 +418,7 @@ public class HttpRequest
                     {
                         ConnectCallback = async (context, ct) =>
                         {
+                            // This Doesn't Send SNI To Upstream Proxy
                             Socket socket = new(SocketType.Stream, ProtocolType.Tcp)
                             {
                                 NoDelay = true // Turn Off Nagle's Algorithm
@@ -431,7 +438,7 @@ public class HttpRequest
                         handler.SslOptions.CertificateRevocationCheckMode = X509RevocationMode.NoCheck;
                         handler.SslOptions.RemoteCertificateValidationCallback = callback;
                     }
-
+                    
                     if (!string.IsNullOrEmpty(hr.ProxyScheme))
                     {
                         NetworkCredential credential = new(hr.ProxyUser, hr.ProxyPass);
@@ -458,7 +465,6 @@ public class HttpRequest
                         content.Headers.ContentType = new MediaTypeHeaderValue(hr.ContentType);
                 }
 
-                
                 httpClient.Timeout = TimeSpan.FromMilliseconds(hr.TimeoutMS);
                 httpClient.DefaultRequestHeaders.ExpectContinue = false;
                 httpClient.DefaultRequestHeaders.ConnectionClose = true;

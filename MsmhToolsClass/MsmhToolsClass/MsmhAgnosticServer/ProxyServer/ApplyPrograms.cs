@@ -53,10 +53,8 @@ public partial class MsmhAgnosticServer
                 {
                     req.ApplyFragment = IsFragmentActive;
                     req.ApplyChangeSNI = IsFakeSniActive;
-                    if (!string.IsNullOrEmpty(rr.Sni) && !rr.Sni.Equals(req.AddressOrig))
-                        req.AddressSNI = rr.Sni;
-                    if (rr.ApplyUpStreamProxy && !string.IsNullOrWhiteSpace(rr.ProxyScheme) &&
-                        !IsUpstreamEqualToServerAddress(rr.ProxyScheme))
+                    if (!string.IsNullOrEmpty(rr.Sni) && !rr.Sni.Equals(req.AddressOrig)) req.AddressSNI = rr.Sni;
+                    if (rr.ApplyUpStreamProxy && !string.IsNullOrWhiteSpace(rr.ProxyScheme) && !IsUpstreamEqualToServerAddress(rr.ProxyScheme))
                     {
                         req.ApplyUpstreamProxy = true;
                         req.ApplyUpstreamProxyToBlockedIPs = rr.ApplyUpStreamProxyToBlockedIPs;
@@ -267,7 +265,7 @@ public partial class MsmhAgnosticServer
                             {
                                 if (req.AddressIsIp)
                                 {
-                                    bool canPing = await NetworkTool.CanPing(req.AddressOrig, 3000);
+                                    bool canPing = await NetworkTool.CanPingAsync(req.AddressOrig, 3000);
                                     req.IsDestBlocked = !canPing;
                                 }
                                 else
@@ -394,17 +392,17 @@ public partial class MsmhAgnosticServer
         {
             if (!string.IsNullOrEmpty(proxyScheme))
             {
-                NetworkTool.GetUrlDetails(proxyScheme, 443, out _, out string host, out _, out _, out int port, out _, out _);
-                if (Settings_.ListenerPort == port)
+                NetworkTool.URL urid = NetworkTool.GetUrlOrDomainDetails(proxyScheme, 443);
+                if (Settings_.ListenerPort == urid.Port)
                 {
-                    bool isIP = NetworkTool.IsIP(host, out IPAddress? ip);
+                    bool isIP = NetworkTool.IsIP(urid.Host, out IPAddress? ip);
                     if (isIP && ip != null)
                     {
                         if (IPAddress.IsLoopback(ip)) result = true;
                     }
                     else
                     {
-                        if (host.ToLower().Equals("localhost")) result = true;
+                        if (urid.Host.ToLower().Equals("localhost")) result = true;
                     }
                 }
             }

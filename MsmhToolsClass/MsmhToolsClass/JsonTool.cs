@@ -1,11 +1,13 @@
-﻿using System.Diagnostics;
+﻿using MsmhToolsClass;
+using System.Diagnostics;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace MsmhToolsClass;
 
 public class JsonTool
 {
-    public static bool IsValidJson(string content)
+    public static bool IsValid(string content)
     {
         bool result = false;
 
@@ -13,19 +15,19 @@ public class JsonTool
         {
             if (!string.IsNullOrEmpty(content))
             {
-                JsonDocument.Parse(content);
+                _ = JsonDocument.Parse(content);
                 result = true;
             }
         }
         catch (Exception ex)
         {
-            Debug.WriteLine("JsonTool IsValidJson: " + ex.Message);
+            Debug.WriteLine("JsonTool IsValid: " + ex.Message);
         }
 
         return result;
     }
 
-    public static bool IsValidJsonFile(string jsonFilePath)
+    public static bool IsValidFile(string jsonFilePath)
     {
         bool result = false;
 
@@ -34,50 +36,141 @@ public class JsonTool
             if (!string.IsNullOrEmpty(jsonFilePath))
             {
                 string content = File.ReadAllText(jsonFilePath);
-                JsonDocument.Parse(content);
+                _ = JsonDocument.Parse(content);
                 result = true;
             }
         }
         catch (Exception ex)
         {
-            Debug.WriteLine("JsonTool IsValidJsonFile: " + ex.Message);
+            Debug.WriteLine("JsonTool IsValidFile: " + ex.Message);
         }
 
         return result;
     }
 
+    public static async Task<bool> IsValidFileAsync(string jsonFilePath)
+    {
+        bool result = false;
+
+        try
+        {
+            if (!string.IsNullOrEmpty(jsonFilePath))
+            {
+                string content = await File.ReadAllTextAsync(jsonFilePath);
+                _ = JsonDocument.Parse(content);
+                result = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine("JsonTool IsValidFileAsync: " + ex.Message);
+        }
+
+        return result;
+    }
+
+    public static string Serialize(object obj)
+    {
+        try
+        {
+            if (obj == null) return string.Empty;
+            obj.SetEmptyValuesToNull();
+
+            JsonSerializerOptions jsonSerializerOptions = new()
+            {
+                WriteIndented = true,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            };
+
+            return JsonSerializer.Serialize(obj, jsonSerializerOptions);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine("JsonTool Serialize: " + ex.Message);
+            return string.Empty;
+        }
+    }
+
+    public static T? Deserialize<T>(string json)
+    {
+        try
+        {
+            JsonDocument jsonDocument = JsonDocument.Parse(json);
+
+            JsonSerializerOptions jsonSerializerOptions = new()
+            {
+                WriteIndented = true,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            };
+
+            return JsonSerializer.Deserialize<T>(jsonDocument, jsonSerializerOptions);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine("JsonTool Deserialize: " + ex.Message);
+            return default;
+        }
+    }
+
     public struct JsonPath
     {
-        public JsonPath() { }
         /// <summary>
         /// Key (Name) To Find
         /// </summary>
-        public string Key { get; set; } = string.Empty;
+        public string Key { get; set; }
         /// <summary>
         /// Break After N Elements
         /// </summary>
-        public int Count { get; set; } = int.MaxValue;
+        public int Count { get; set; } = 0;
         /// <summary>
         /// Conditions To Match
         /// </summary>
         public List<JsonCondition> Conditions { get; set; } = new();
+
+        public JsonPath(string key)
+        {
+            Key = key;
+        }
+        public JsonPath(string key, int count)
+        {
+            Key = key;
+            Count = count;
+        }
+        public JsonPath(string key, int count, List<JsonCondition> conditions)
+        {
+            Key = key;
+            Count = count;
+            Conditions = conditions;
+        }
     }
 
     public struct JsonCondition
     {
         public string Key { get; set; }
         public string Value { get; set; }
+
+        public JsonCondition(string key, string value)
+        {
+            Key = key;
+            Value = value;
+        }
     }
 
-    public static List<string> GetValues(string jsonStr, List<JsonPath> path)
+    // e.g.
+    // List<JsonTool.JsonPath> path = new()
+    // {
+    //     new JsonTool.JsonPath("assets", 1) { Conditions = new() { new("prerelease", "true") } },
+    //     new JsonTool.JsonPath("browser_download_url") { Conditions = new() }
+    // };
+    public static List<string> GetValues(string jsonStr, List<JsonPath> paths)
     {
         List<string> values = new();
 
-        jsonStr = jsonStr.Trim();
-        if (string.IsNullOrEmpty(jsonStr)) return values;
-
         try
         {
+            jsonStr = jsonStr.Trim();
+            if (string.IsNullOrEmpty(jsonStr)) return values;
+
             JsonDocumentOptions jsonDocumentOptions = new()
             {
                 AllowTrailingCommas = true
@@ -147,7 +240,7 @@ public class JsonTool
                             jsonElements.AddRange(jsonElements2);
                         }
 
-                        if (n + 1 >= path.Count && jsonElements.Count > 0) break;
+                        if (path.Count > 0 && n + 1 >= path.Count && jsonElements.Count > 0) break;
                     }
                 }
                 catch (Exception ex)
@@ -158,7 +251,7 @@ public class JsonTool
                 return jsonElements;
             }
 
-            if (path.Any())
+            if (paths.Count > 0)
             {
                 static List<string> loop2(List<JsonElement> elements)
                 {
@@ -194,9 +287,9 @@ public class JsonTool
                 }
 
                 List<JsonElement> jsonElements = new();
-                for (int n = 0; n < path.Count; n++)
+                for (int n = 0; n < paths.Count; n++)
                 {
-                    JsonPath p = path[n];
+                    JsonPath p = paths[n];
                     if (n == 0)
                     {
                         jsonElements = loop(p, new List<JsonElement>() { json });

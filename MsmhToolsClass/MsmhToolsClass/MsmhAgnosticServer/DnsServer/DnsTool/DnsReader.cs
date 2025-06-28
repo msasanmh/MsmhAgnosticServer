@@ -41,7 +41,7 @@ public class DnsReader
         ProtocolName = DnsEnums.DnsProtocolName.Unknown;
 
         if (string.IsNullOrEmpty(Dns)) return;
-
+        
         try
         {
             // Support For DNSCrypt Relay, Oblivious DoH Relay
@@ -62,16 +62,15 @@ public class DnsReader
 
             if (Dns.ToLower().StartsWith("sdns://"))
             {
-                IsDnsCryptStamp = true;
-                
                 // Decode Stamp
                 DNSCryptStampReader stampReader = new(Dns);
                 if (stampReader != null && stampReader.IsDecryptionSuccess)
                 {
+                    IsDnsCryptStamp = true;
                     Scheme = "stamp://";
                     Host = stampReader.Host;
                     if (!string.IsNullOrEmpty(Host))
-                        IsHostIP = IPAddress.TryParse(Host, out _);
+                        IsHostIP = NetworkTool.IsIP(Host, out _);
                     IP = stampReader.IP;
                     Port = stampReader.Port;
                     Path = stampReader.Path;
@@ -81,14 +80,18 @@ public class DnsReader
                     else if (Protocol == DnsEnums.DnsProtocol.TCP) Scheme = "tcp://";
                     else if (Protocol == DnsEnums.DnsProtocol.DoT) Scheme = "tls://";
                     else if (Protocol == DnsEnums.DnsProtocol.DoH) Scheme = "https://";
+                    else if (Protocol == DnsEnums.DnsProtocol.DoQ) Scheme = "quic://";
                     else if (Protocol == DnsEnums.DnsProtocol.ObliviousDohTarget) Scheme = "https://";
                     else if (Protocol == DnsEnums.DnsProtocol.ObliviousDohRelay) Scheme = "https://";
-                    else if (Protocol == DnsEnums.DnsProtocol.DoQ) Scheme = "quic://";
 
                     ProtocolName = stampReader.ProtocolName;
                     StampReader = stampReader;
 
-                    if (Protocol == DnsEnums.DnsProtocol.ObliviousDohTarget)
+                    if (Protocol == DnsEnums.DnsProtocol.DnsCrypt)
+                    {
+                        if (!string.IsNullOrEmpty(relay)) SetDNSCryptRelay(relay);
+                    }
+                    else if (Protocol == DnsEnums.DnsProtocol.ObliviousDohTarget)
                     {
                         if (!string.IsNullOrEmpty(relay)) SetODoHRelay(relay);
                         else
@@ -97,10 +100,6 @@ public class DnsReader
                             Protocol = DnsEnums.DnsProtocol.DoH;
                             ProtocolName = DnsEnums.DnsProtocolName.DoH;
                         }
-                    }
-                    else if (Protocol == DnsEnums.DnsProtocol.DnsCrypt)
-                    {
-                        if (!string.IsNullOrEmpty(relay)) SetDNSCryptRelay(relay);
                     }
 
                     // Get Company Name (SDNS)
@@ -155,13 +154,20 @@ public class DnsReader
                     Protocol = DnsEnums.DnsProtocol.TCP;
                     ProtocolName = DnsEnums.DnsProtocolName.TCP;
                 }
+                else if (Dns.ToLower().Equals("system"))
+                {
+                    Protocol = DnsEnums.DnsProtocol.System;
+                    ProtocolName = DnsEnums.DnsProtocolName.System;
+                }
                 else
                 {
-                    NetworkTool.GetUrlDetails(Dns, 53, out _, out string ipStr, out _, out _, out int port, out _, out _);
+                    NetworkTool.URL urid = NetworkTool.GetUrlOrDomainDetails(Dns, 53);
 
-                    if (NetworkTool.IsIP(ipStr, out _))
+                    if (NetworkTool.IsIP(urid.Host, out _))
                     {
                         // Plain DNS UDP
+                        Dns = $"udp://{urid.Host}:{urid.Port}";
+                        DnsWithRelay = Dns;
                         SetIpPortHostPath(Dns, 53);
 
                         Protocol = DnsEnums.DnsProtocol.UDP;
@@ -185,18 +191,18 @@ public class DnsReader
     {
         try
         {
-            NetworkTool.GetUrlDetails(dns, defaultPort, out string scheme, out string host, out _, out _, out int port, out string path, out bool isIPv6);
-            Scheme = scheme.ToLower();
-            Host = host;
-            IsHostIP = IPAddress.TryParse(Host, out _);
-            Port = port;
-            Path = path;
+            NetworkTool.URL urid = NetworkTool.GetUrlOrDomainDetails(dns, defaultPort);
+            Scheme = urid.Scheme.ToLower();
+            Host = urid.Host;
+            IsHostIP = NetworkTool.IsIP(Host, out _);
+            Port = urid.Port;
+            Path = urid.Path;
 
             if (!string.IsNullOrEmpty(CompanyNameDataFileContent))
             {
                 string? ipOrHost = Host;
                 if (string.IsNullOrEmpty(ipOrHost)) ipOrHost = IP.ToString();
-                if (string.IsNullOrEmpty(ipOrHost)) ipOrHost = host;
+                if (string.IsNullOrEmpty(ipOrHost)) ipOrHost = urid.Host;
                 CompanyName = GetCompanyName.HostToCompanyOffline(ipOrHost, CompanyNameDataFileContent);
             }
         }
@@ -213,16 +219,16 @@ public class DnsReader
             DNSCryptStampReader sr = new(relay);
             if (sr.Protocol == DNSCryptStampReader.StampProtocol.ObliviousDohRelay)
             {
-                Protocol = DnsEnums.DnsProtocol.ObliviousDohTarget;
-                ProtocolName = DnsEnums.DnsProtocolName.ObliviousDohTarget;
+                Protocol = DnsEnums.DnsProtocol.ObliviousDoH;
+                ProtocolName = DnsEnums.DnsProtocolName.ObliviousDoH;
                 
                 ODoHRelayAddress = relay;
             }
         }
         else if (relay.ToLower().StartsWith("https://"))
         {
-            Protocol = DnsEnums.DnsProtocol.ObliviousDohTarget;
-            ProtocolName = DnsEnums.DnsProtocolName.ObliviousDohTarget;
+            Protocol = DnsEnums.DnsProtocol.ObliviousDoH;
+            ProtocolName = DnsEnums.DnsProtocolName.ObliviousDoH;
 
             ODoHRelayAddress = relay;
         }
@@ -244,17 +250,17 @@ public class DnsReader
         }
         else
         {
-            NetworkTool.GetUrlDetails(relay, 0, out _, out string ipStr, out _, out _, out int port, out _, out _);
-            if (port != 0)
+            NetworkTool.URL urid = NetworkTool.GetUrlOrDomainDetails(relay, 0);
+            if (urid.Port != 0)
             {
-                bool isIp = IPAddress.TryParse(ipStr, out IPAddress? ip);
+                bool isIp = NetworkTool.IsIP(urid.Host, out IPAddress? ip);
                 if (isIp && ip != null)
                 {
                     Protocol = DnsEnums.DnsProtocol.AnonymizedDNSCrypt;
                     ProtocolName = DnsEnums.DnsProtocolName.AnonymizedDNSCrypt;
 
                     DNSCryptRelayIP = ip;
-                    DNSCryptRelayPort = port;
+                    DNSCryptRelayPort = urid.Port;
                 }
             }
         }
@@ -266,8 +272,8 @@ public class DnsReader
         {
             DNSCryptStampReader.StampProtocol.PlainDNS => DnsEnums.DnsProtocol.UDP,
             DNSCryptStampReader.StampProtocol.DnsCrypt => DnsEnums.DnsProtocol.DnsCrypt,
-            DNSCryptStampReader.StampProtocol.DoH => DnsEnums.DnsProtocol.DoH,
             DNSCryptStampReader.StampProtocol.DoT => DnsEnums.DnsProtocol.DoT,
+            DNSCryptStampReader.StampProtocol.DoH => DnsEnums.DnsProtocol.DoH,
             DNSCryptStampReader.StampProtocol.DoQ => DnsEnums.DnsProtocol.DoQ,
             DNSCryptStampReader.StampProtocol.ObliviousDohTarget => DnsEnums.DnsProtocol.ObliviousDohTarget,
             DNSCryptStampReader.StampProtocol.AnonymizedDNSCryptRelay => DnsEnums.DnsProtocol.AnonymizedDNSCryptRelay,

@@ -20,14 +20,16 @@ public class ProxifiedTcpClient
     {
         if (!string.IsNullOrEmpty(ProxyScheme))
         {
-            NetworkTool.GetUrlDetails(ProxyScheme, 443, out _, out string proxyHost, out _, out _, out int proxyPort, out _, out _);
+            NetworkTool.URL urid = NetworkTool.GetUrlOrDomainDetails(ProxyScheme, 443);
+            string proxyHost = urid.Host;
+            int proxyPort = urid.Port;
 
             try
             {
                 if (ProxyScheme.StartsWith("http://", StringComparison.InvariantCultureIgnoreCase) || ProxyScheme.StartsWith("https://", StringComparison.InvariantCultureIgnoreCase))
                 {
                     HttpTcpClient httpTcpClient = new(proxyHost, proxyPort, ProxyUser, ProxyPass);
-                    TcpClient? proxifiedClient = await httpTcpClient.CreateConnection(host, port).ConfigureAwait(false);
+                    TcpClient? proxifiedClient = await httpTcpClient.CreateConnectionAsync(host, port).ConfigureAwait(false);
                     if (proxifiedClient != null)
                     {
                         return (true, proxifiedClient);
@@ -36,7 +38,7 @@ public class ProxifiedTcpClient
                 else if (ProxyScheme.StartsWith("socks5://", StringComparison.InvariantCultureIgnoreCase))
                 {
                     Socks5TcpClient socks5TcpClient = new(proxyHost, proxyPort, ProxyUser, ProxyPass);
-                    TcpClient? proxifiedClient = await socks5TcpClient.CreateConnection(host, port).ConfigureAwait(false);
+                    TcpClient? proxifiedClient = await socks5TcpClient.CreateConnectionAsync(host, port).ConfigureAwait(false);
                     if (proxifiedClient != null)
                     {
                         return (true, proxifiedClient);
