@@ -1,5 +1,5 @@
 ﻿using Microsoft.Win32;
-using System;
+using MsmhToolsClass.MsmhAgnosticServer;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -10,8 +10,6 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
-using System.Security.Policy;
-using static MsmhToolsClass.NetworkTool;
 
 namespace MsmhToolsClass;
 
@@ -20,27 +18,23 @@ public static class NetworkTool
     public static string IpToUrl(string scheme, IPAddress ip, int port, string path)
     {
         string url = string.Empty;
-        scheme = scheme.Trim();
-        string defaultScheme = "https";
-        path = path.Trim();
-
+        
         try
         {
-            bool schemeIsNullOrWhiteSpace = string.IsNullOrWhiteSpace(scheme);
-            if (!schemeIsNullOrWhiteSpace && scheme.EndsWith("://")) scheme = scheme.TrimEnd("://");
+            scheme = scheme.Trim();
+            if (!string.IsNullOrEmpty(scheme) && !scheme.EndsWith("://")) scheme = $"{scheme}://";
+            if (scheme.Equals("://")) scheme = string.Empty;
 
-            UriBuilder ub = new()
-            {
-                Scheme = schemeIsNullOrWhiteSpace ? defaultScheme : scheme,
-                Host = ip.ToString(),
-                Port = port > 0 ? port : 443,
-                Path = path
-            };
+            bool isIPv6 = IsIPv6(ip);
+            string ipStr = isIPv6 ? $"[{ip.ToStringNoScopeId()}]" : ip.ToString();
 
-            url = ub.Uri.ToString();
-            if (schemeIsNullOrWhiteSpace && url.StartsWith($"{defaultScheme}://"))
-                url = url.TrimStart($"{defaultScheme}://");
-            if (url.EndsWith('/')) url = url.TrimEnd('/');
+            port = port > 0 && port <= 65535 ? port : 443;
+
+            path = path.Trim().TrimEnd('/');
+            if (!string.IsNullOrEmpty(path) && !path.StartsWith('/')) path = $"/{path}";
+            if (path.Equals('/')) path = string.Empty;
+
+            url = $"{scheme}{ipStr}:{port}{path}";
         }
         catch (Exception ex)
         {
@@ -275,6 +269,7 @@ public static class NetworkTool
     public static URL GetUrlOrDomainDetails(string urlOrDomain, int defaultPort)
     {
         URL url = new();
+
         try
         {
             urlOrDomain = urlOrDomain.Trim();
@@ -297,6 +292,26 @@ public static class NetworkTool
                 url.SchemeName = scheme[..(indexOfScheme - separator_Scheme.Length)];
             }
 
+            // Get Port
+            string tempGetPort = urlOrDomain.Trim();
+            int pathIndex = tempGetPort.IndexOf('/');
+            if (pathIndex != -1)
+            {
+                // Strip Path
+                tempGetPort = tempGetPort[..pathIndex];
+            }
+            int portIndex = tempGetPort.LastIndexOf(':'); // LastIndexOf (Domain May Be IPv6)
+            if (portIndex != -1)
+            {
+                string portStr = tempGetPort[(portIndex + 1)..];
+                bool isPortInt = int.TryParse(portStr, out int portOut);
+                if (isPortInt)
+                {
+                    defaultPort = portOut;
+                    url.Port = defaultPort;
+                }
+            }
+            
             urlOrDomain = urlOrDomain.Trim();
             if (string.IsNullOrEmpty(urlOrDomain)) return url;
 
@@ -304,7 +319,7 @@ public static class NetworkTool
             try { uri = new($"https://{urlOrDomain}", UriKind.Absolute); }
             catch (Exception ex)
             {
-                Debug.WriteLine("Domain ==> " + urlOrDomain);
+                Debug.WriteLine("NetworkTool GetUrlOrDomainDetails Domain ==> " + urlOrDomain);
                 Debug.WriteLine(ex.Message);
             }
             url.Uri = uri;
@@ -405,6 +420,7 @@ public static class NetworkTool
         {
             Debug.WriteLine("NetworkTool GetUrlOrDomainDetails: " + ex.Message);
         }
+        
         return url;
     }
 
@@ -794,6 +810,20 @@ public static class NetworkTool
         catch (Exception ex)
         {
             Debug.WriteLine("NetworkTool GetLocalIPv6: " + ex.Message);
+            return null;
+        }
+    }
+
+    public static IPAddress? GetLocalIP(IPAddress dnsIP, int dnsPort)
+    {
+        try
+        {
+            bool isIPv6 = IsIPv6(dnsIP);
+            return isIPv6 ? GetLocalIPv6(dnsIP.ToStringNoScopeId(), dnsPort) : GetLocalIPv4(dnsIP.ToString(), dnsPort);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine("NetworkTool GetLocalIP: " + ex.Message);
             return null;
         }
     }
@@ -1868,7 +1898,7 @@ public static class NetworkTool
     /// <summary>
     /// Check Internet Access Based On NIC Send And Receive
     /// </summary>
-    public static async Task<bool> IsInternetAliveByNicAsync(IPAddress? ip = null, int timeoutMS = 2000)
+    public static async Task<bool> IsInternetAliveByNicAsync(IPAddress? ip = null, int timeoutMS = 3000)
     {
         try
         {
@@ -1904,6 +1934,9 @@ public static class NetworkTool
                         statistics = nic.GetIPStatistics();
                         long bytesSent2 = statistics.BytesSent;
                         long bytesReceived2 = statistics.BytesReceived;
+
+                        Debug.WriteLine("Sent:" + (bytesSent2 - bytesSent1));
+                        Debug.WriteLine("Received: " + (bytesReceived2 - bytesReceived1));
 
                         if (bytesSent2 > bytesSent1 && bytesReceived2 > bytesReceived1) return true;
                     }
@@ -1947,12 +1980,14 @@ public static class NetworkTool
     public enum InternetState
     {
         Online,
+        PingOnly,
+        DnsOnly,
         Unstable,
         Offline,
         Unknown
     }
 
-    public static async Task<InternetState> GetInternetStateAsync(IPAddress? ip, int timeoutMS = 3000)
+    public static async Task<InternetState> GetInternetStateAsync(IPAddress? ip, string? nonBlockedForeignDomain = "google.com", int timeoutMS = 6000)
     {
         try
         {
@@ -1964,16 +1999,37 @@ public static class NetworkTool
                 _ => IPAddress.Parse("1.1.1.1") // Others
             };
 
-            bool isAliveByPing = await IsInternetAliveByPingAsync(ip, timeoutMS);
-            if (isAliveByPing)
+            if (string.IsNullOrWhiteSpace(nonBlockedForeignDomain)) nonBlockedForeignDomain = "google.com";
+
+            bool byPing = false, byDnsIPv4 = false, byDnsIPv6 = false, byDnsIP = false;
+
+            async Task byPingAsync()
             {
-                return InternetState.Online;
+                byPing = await IsInternetAliveByPingAsync(ip, timeoutMS);
             }
-            else
+
+            async Task byDnsIPv4Async()
             {
-                bool isAliveByNic = await IsInternetAliveByNicAsync(ip, timeoutMS);
-                return isAliveByNic ? InternetState.Unstable : InternetState.Offline;
+                IPAddress domainIPv4 = await GetIP.GetIpFromDnsAddressAsync(nonBlockedForeignDomain, $"udp://{ip}", false, timeoutMS, false, IPAddress.None, 0);
+                byDnsIPv4 = domainIPv4 != IPAddress.None && domainIPv4 != IPAddress.IPv6None;
             }
+
+            async Task byDnsIPv6Async()
+            {
+                IPAddress domainIPv6 = await GetIP.GetIpFromDnsAddressAsync(nonBlockedForeignDomain, $"udp://{ip}", false, timeoutMS, true, IPAddress.None, 0);
+                byDnsIPv6 = domainIPv6 != IPAddress.None && domainIPv6 != IPAddress.IPv6None;
+            }
+
+            await Task.WhenAll(byPingAsync(), byDnsIPv4Async(), byDnsIPv6Async());
+
+            byDnsIP = byDnsIPv4 || byDnsIPv6;
+            
+            if (byPing && byDnsIP) return InternetState.Online;
+            if (byPing && !byDnsIP) return InternetState.PingOnly;
+            if (!byPing && byDnsIP) return InternetState.DnsOnly;
+
+            bool isAliveByNic = await IsInternetAliveByNicAsync(ip, timeoutMS);
+            return isAliveByNic ? InternetState.Unstable : InternetState.Offline;
         }
         catch (Exception)
         {
@@ -2289,8 +2345,8 @@ public static class NetworkTool
     {
         host = host.Trim();
         if (string.IsNullOrEmpty(host)) return false;
-        if (host.Equals("0.0.0.0")) return false;
-        if (host.Equals("::0")) return false;
+        if (host.Equals(IPAddress.Any.ToString())) return false;
+        if (host.Equals(IPAddress.IPv6Any.ToStringNoScopeId())) return false;
         Task<bool> task = Task.Run(async () =>
         {
             try

@@ -469,8 +469,10 @@ public class HttpRequest
                 httpClient.DefaultRequestHeaders.ExpectContinue = false;
                 httpClient.DefaultRequestHeaders.ConnectionClose = true;
 
-                HttpRequestMessage message = new(hr.Method, hr.URI);
-                message.Content = content;
+                HttpRequestMessage message = new(hr.Method, hr.URI)
+                {
+                    Content = content
+                };
                 if (!string.IsNullOrEmpty(hr.ContentType))
                     message.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(hr.ContentType));
                 message.Headers.TryAddWithoutValidation("User-Agent", hr.UserAgent);

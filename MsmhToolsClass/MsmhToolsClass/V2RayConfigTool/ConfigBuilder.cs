@@ -23,7 +23,7 @@ public partial class ConfigBuilder
             url = url.Trim();
             if (EncodingTool.IsBase64String(url))
             {
-                url = Encoding.UTF8.GetString(EncodingTool.UrlDecode(url));
+                url = Encoding.UTF8.GetString(EncodingTool.Base64UrlDecode(url));
                 url = url.Trim();
             }
             Debug.WriteLine(url);

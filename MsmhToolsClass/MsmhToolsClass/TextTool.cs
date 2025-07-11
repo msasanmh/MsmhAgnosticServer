@@ -174,7 +174,8 @@ public class TextTool
             if (string.IsNullOrEmpty(html)) return extractedStrings;
 
             html = html.ReplaceLineEndings(" "); // One Liner
-            html = WebUtility.HtmlDecode(html); // Decode
+            html = WebUtility.HtmlDecode(html); // Decode HTML
+            html = WebUtility.UrlDecode(html); // Decode URL
 
             bool isHTML = html.Contains("<!DOCTYPE html>", StringComparison.OrdinalIgnoreCase) || html.StartsWith("<html", StringComparison.OrdinalIgnoreCase);
             
@@ -187,6 +188,8 @@ public class TextTool
             html = html.Replace("[", " ").Replace("]", " "); // Can Be IPv6
             html = html.Replace("{", " ").Replace("}", " ");
             html = html.Replace("\'", " ").Replace("\"", " ");
+            html = html.Replace('|', ' ');
+            html = html.Replace(":heavy_check_mark:", " ", StringComparison.OrdinalIgnoreCase);
 
             if (isHTML)
             {
@@ -197,10 +200,8 @@ public class TextTool
             {
                 // For MarkDown
                 html = await RemoveTextAsync(html, '(', ')', replaceTagsWithSpace);
-                html = html.Replace('|', ' ');
-                html = html.Replace(":heavy_check_mark:", " ", StringComparison.OrdinalIgnoreCase);
             }
-
+            
             // Split To Lines By Space
             extractedStrings = html.Split(' ', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList();
 

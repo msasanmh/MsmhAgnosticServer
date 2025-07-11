@@ -20,8 +20,8 @@ internal class Program
         List<string> dnsServers = new()
         {
             "sdns://AQMAAAAAAAAAEjEwMy44Ny42OC4xOTQ6ODQ0MyAxXDKkdrOao8ZeLyu7vTnVrT0C7YlPNNf6trdMkje7QR8yLmRuc2NyeXB0LWNlcnQuZG5zLmJlYmFzaWQuY29t",
-            "tcp://8.8.8.8:53",
-            "tcp://1.1.1.1:53",
+            //"tcp://8.8.8.8:53",
+            //"tcp://1.1.1.1:53",
             "https://max.rethinkdns.com/dns-query",
             "h3://max.rethinkdns.com/dns-query",
             "https://45.90.29.204:443/dns-query",
@@ -71,7 +71,7 @@ internal class Program
             //DefaultSni = "speedtest.net",
         };
         
-        await server.EnableSSL(settingsSSL);
+        await server.EnableSSLAsync(settingsSSL);
 
         // Start Server
         await server.StartAsync(settings);

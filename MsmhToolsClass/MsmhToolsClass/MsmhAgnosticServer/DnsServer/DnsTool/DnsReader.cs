@@ -197,6 +197,7 @@ public class DnsReader
             IsHostIP = NetworkTool.IsIP(Host, out _);
             Port = urid.Port;
             Path = urid.Path;
+            if (!string.IsNullOrEmpty(Path) && !Path.StartsWith('/')) Path = $"/{Path}";
 
             if (!string.IsNullOrEmpty(CompanyNameDataFileContent))
             {

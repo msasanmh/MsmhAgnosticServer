@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Net;
 using System.Text;
 
 namespace MsmhToolsClass.MsmhAgnosticServer;
@@ -88,6 +89,7 @@ public static class DnsTools
                         NetworkTool.URL urid = NetworkTool.GetUrlOrDomainDetails(dns, 443);
                         if (urid.Path.Length < 2) continue;
                     }
+                    dns = dns.TrimEnd('/');
                     if (IsDnsProtocolSupported(dns)) dnss.Add(dns);
                 }
             }
@@ -98,5 +100,90 @@ public static class DnsTools
         }
 
         return dnss.Distinct().ToList();
+    }
+
+    public static async Task<List<string>> DecodeStampAsync(List<string> dnss)
+    {
+        List<string> temp = new();
+
+        await Task.Run(() =>
+        {
+            try
+            {
+                for (int n = 0; n < dnss.Count; n++)
+                {
+                    string dns = dnss[n];
+                    DnsReader dnsReader = new(dns);
+                    bool added = false;
+                    if (dnsReader.IsDnsCryptStamp)
+                    {
+                        if (dnsReader.Protocol == DnsEnums.DnsProtocol.UDP || dnsReader.Protocol == DnsEnums.DnsProtocol.TCP)
+                        {
+                            if (dnsReader.IsHostIP)
+                            {
+                                if (!NetworkTool.IsLocalIP(dnsReader.Host))
+                                {
+                                    bool isIP = NetworkTool.IsIP(dnsReader.Host, out IPAddress? ipOut);
+                                    if (isIP && ipOut != null)
+                                    {
+                                        string dns_IP_URL = NetworkTool.IpToUrl(dnsReader.Scheme, ipOut, dnsReader.Port, string.Empty);
+                                        temp.Add(dns_IP_URL);
+                                        added = true;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                if (!NetworkTool.IsLocalIP(dnsReader.IP.ToString()))
+                                {
+                                    string dns_IP_URL = NetworkTool.IpToUrl(dnsReader.Scheme, dnsReader.IP, dnsReader.Port, string.Empty);
+                                    temp.Add(dns_IP_URL);
+                                    added = true;
+                                }
+                            }
+                        }
+                        else if (dnsReader.Protocol == DnsEnums.DnsProtocol.DoT)
+                        {
+                            string dns_URL = $"{dnsReader.Scheme}{dnsReader.Host}";
+                            if (dnsReader.Port != 853) dns_URL = $"{dnsReader.Scheme}{dnsReader.Host}:{dnsReader.Port}";
+                            temp.Add(dns_URL);
+
+                            if (!dnsReader.IsHostIP && !NetworkTool.IsLocalIP(dnsReader.IP.ToString()))
+                            {
+                                string dns_IP_URL = NetworkTool.IpToUrl(dnsReader.Scheme, dnsReader.IP, dnsReader.Port, string.Empty);
+                                temp.Add(dns_IP_URL);
+                            }
+
+                            added = true;
+                        }
+                        else if (dnsReader.Protocol == DnsEnums.DnsProtocol.DoH)
+                        {
+                            string dns_URL = $"{dnsReader.Scheme}{dnsReader.Host}{dnsReader.Path}";
+                            if (dnsReader.Port != 443) dns_URL = $"{dnsReader.Scheme}{dnsReader.Host}:{dnsReader.Port}{dnsReader.Path}";
+                            temp.Add(dns_URL);
+
+                            if (!dnsReader.IsHostIP && !NetworkTool.IsLocalIP(dnsReader.IP.ToString()))
+                            {
+                                string dns_IP_URL = NetworkTool.IpToUrl(dnsReader.Scheme, dnsReader.IP, dnsReader.Port, dnsReader.Path);
+                                Debug.WriteLine(dns_IP_URL);
+                                temp.Add(dns_IP_URL);
+                            }
+
+                            added = true;
+                        }
+                    }
+
+                    if (!added) temp.Add(dns);
+                }
+
+                temp = temp.Distinct().ToList();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("DnsTools DecodeStampAsync: " + ex.Message);
+            }
+        });
+
+        return temp;
     }
 }

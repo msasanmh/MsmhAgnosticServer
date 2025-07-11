@@ -198,7 +198,7 @@ public class EncodingTool
         }
     }
 
-    public static string UrlEncode(byte[] buffer)
+    public static string Base64UrlEncode(byte[] buffer)
     {
         try
         {
@@ -218,7 +218,7 @@ public class EncodingTool
         }
     }
 
-    public static byte[] UrlDecode(string base64Url)
+    public static byte[] Base64UrlDecode(string base64Url)
     {
         string base64 = Base64UrlToBase64(base64Url);
 

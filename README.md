@@ -89,7 +89,7 @@ AgnosticSettingsSSL settingsSSL = new(true)
 await server.EnableSSL(settingsSSL);
 
 // Start Server
-server.Start(settings);
+await server.StartAsync(settings);
 
 // Write To Console
 Console.WriteLine($"Msmh Agnostic Server Started On: {settings.ListenerIP}:{settings.ListenerPort}");
