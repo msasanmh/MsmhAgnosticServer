@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Platforms>AnyCPU;x64;x86</Platforms>
-    <Version>$(VersionPrefix)1.7.0</Version>
+    <Version>$(VersionPrefix)1.9.0</Version>
     <Copyright>MSasanMH</Copyright>
     <Title>Msmh Agnostic Server</Title>
     <Authors>MSasanMH</Authors>
@@ -30,19 +30,16 @@
 	<IncludeSymbols>true</IncludeSymbols>
 	<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 	<PackageRequireLicenseAcceptance>True</PackageRequireLicenseAcceptance>
+	<PackageReleaseNotes>Compatible with Linux (Tested on Ubuntu server)
+Compatible with Android (Tested On Android 13)
+A few bugs fixed.</PackageReleaseNotes>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <Optimize>True</Optimize>
-  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'" />
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <Optimize>True</Optimize>
-  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
-    <Optimize>True</Optimize>
-  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'" />
 
   <ItemGroup>
     <None Remove="C:\Users\msasa\.nuget\packages\microsoft.powershell.sdk\7.2.18\contentFiles\any\any\ref\Microsoft.CSharp.dll" />

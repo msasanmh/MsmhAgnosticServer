@@ -1,27 +1,30 @@
-### A DNS and Proxy Server in C# (Class Library .NET 6)
+### A DNS Client/Server and Proxy Server in C# (Class Library .NET 6)
 
-_I'm just sharing this library for developers due to recieved requests.
-It's a multi platform DNS and Proxy Server. Target Platform: Windows.
-Tested once on Android. You can make it fully compatible with your own target platform._
+_I'm sharing this library for developers due to recieved requests.
+It's a multi platform DNS Client/Server and Proxy Server.\
+Target Platform: Windows._
 
+* v1.9.0:
+    - Compatible with Linux (Tested on Ubuntu server)
+    - Compatible with Android (Tested on Android 13)
 * v1.6.7: DoH Client fixed for Android.
 
 [Library Directory Address.](https://github.com/msasanmh/MsmhAgnosticServer/tree/main/MsmhToolsClass/MsmhToolsClass/MsmhAgnosticServer)
 
-DNS Servers: DNS-Over-UDP, DNS-Over-TCP, DNS-Over-HTTPS (DoH)\
-DNS Clients: DNS-Over-UDP, DNS-Over-TCP, DNS-Over-HTTPS (DoH)(https://, h3://), DNS-Over-TLS (DoT), DNSCrypt, Anonymized DNSCrypt.\
-Proxy Servers:\
+**DNS Servers:** DNS-Over-UDP, DNS-Over-TCP, DNS-Over-HTTPS (DoH)\
+**DNS Clients:** DNS-Over-UDP, DNS-Over-TCP, DNS-Over-HTTPS (DoH)(https://, h3://), DNS-Over-TLS (DoT), DNSCrypt, Anonymized DNSCrypt.\
+**Proxy Servers:**\
     HTTP (Domain, IPv4, IPv6) (Get, Post, etc)\
     HTTPS (Domain, IPv4, IPv6) (Post, etc)\
     SOCKS4 (IPv4) (Connect, Bind)\
     SOCKS4A (Domain, IPv4) (Connect, Bind)\
     SOCKS5 (Domain, IPv4, IPv6) (Connect, Bind, UDP)
 
-DNS Server Features: DNS Records modification, Upstream Proxy, Text based DNS Rules (Block, Fake DNS, Upstream Proxy per domain)\
-Proxy Server Features: Upstream Proxy, Fragment, Fake SNI, Text based Proxy Rules (Block, Fake DNS, Fake SNI, Custom DNS, Upstream Proxy per domain)\
+**DNS Server Features:** DNS Records modification, Upstream Proxy, Text based DNS Rules (Block, Fake DNS, Upstream Proxy per domain)\
+**Proxy Server Features:** Upstream Proxy, Fragment, Fake SNI, Text based Proxy Rules (Block, Fake DNS, Fake SNI, Custom DNS, Upstream Proxy per domain)\
 
-Smart DNS Server: Supported - You can create an Smart DNS Server using DNS Rules (Just modify all A Records and AAAA Records To Your Proxy Server IP).\
-Limit DoH By Path: Supported - e.g. https://example.com/UserName/dns-query </br>
+**Smart DNS Server:** Supported - You can create an Smart DNS Server using DNS Rules (Just modify all A Records and AAAA Records To Your Proxy Server IP).\
+**Limit DoH By Path:** Supported - e.g. https://example.com/UserName/dns-query </br>
 
 Running a DNS and Proxy Server on port 8080 example:
 ```C#
