@@ -5,20 +5,11 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Platforms>AnyCPU;x64;x86</Platforms>
-    <Version>$(VersionPrefix)1.9.0</Version>
+    <Version>$(VersionPrefix)1.9.1</Version>
     <Copyright>MSasanMH</Copyright>
     <Title>Msmh Agnostic Server</Title>
     <Authors>MSasanMH</Authors>
-    <Description>Server Supports:
-    UDP Plain DNS
-    TCP Plain DNS
-    DNS Over HTTPS (DoH)
-    HTTP (Domain, IPv4, IPv6) (Get, Post, etc)
-    HTTPS (Domain, IPv4, IPv6) (Post, etc)
-    SOCKS4 (IPv4) (Connect, Bind)
-    SOCKS4A (Domain, IPv4) (Connect, Bind)
-    SOCKS5 (Domain, IPv4, IPv6) (Connect, Bind, UDP)
-    SSL Decryption</Description>
+    <Description>A DNS Client/Server and Proxy Server. Read ReadMe file for more info.</Description>
     <PackageProjectUrl>https://github.com/msasanmh/MsmhAgnosticServer/</PackageProjectUrl>
 	<RepositoryUrl>https://github.com/msasanmh/MsmhAgnosticServer/</RepositoryUrl>
     <PackageTags>DNS Server;Proxy Server;</PackageTags>
